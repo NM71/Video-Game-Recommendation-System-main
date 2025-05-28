@@ -303,6 +303,34 @@ def main():
     Data source: [Kaggle - Video Game Sales with Ratings](https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings)
     """)
     
+    # Instructions
+    st.markdown("""
+    ## How to Use
+    1. Select a game from the dropdown or enter a game title
+    2. Optionally select a specific platform
+    3. Click "Get Recommendations" to find similar games
+    
+    ## About the System
+    This recommendation system uses machine learning to analyze game features and find similar titles based on:
+    - Game genre
+    - Platform
+    - ESRB rating
+    - Critic and user scores
+    
+        The system uses the K-Nearest Neighbors algorithm with cosine similarity to find games that are most similar to your selection.
+    
+    ## Dataset
+    The dataset contains information about video games including:
+    - Game titles
+    - Platforms
+    - Genres
+    - Critic scores from Metacritic
+    - User scores from Metacritic
+    - ESRB ratings
+    
+    The data was obtained from [Kaggle - Video Game Sales with Ratings](https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings).
+    """)
+    
     # Add data visualization section
     if st.checkbox("Show Data Visualizations"):
         st.markdown("<h2 class='subheader'>Data Visualizations</h2>", unsafe_allow_html=True)
@@ -359,35 +387,5 @@ def main():
             ax.set(xlabel="User Score", ylabel="Critic Score", title="User Scores vs. Critic Scores")
             st.pyplot(fig)
 
-
-    # Instructions
-    st.markdown("""
-    ## How to Use
-    1. Select a game from the dropdown or enter a game title
-    2. Optionally select a specific platform
-    3. Click "Get Recommendations" to find similar games
-    
-    ## About the System
-    This recommendation system uses machine learning to analyze game features and find similar titles based on:
-    - Game genre
-    - Platform
-    - ESRB rating
-    - Critic and user scores
-    
-        The system uses the K-Nearest Neighbors algorithm with cosine similarity to find games that are most similar to your selection.
-    
-    ## Dataset
-    The dataset contains information about video games including:
-    - Game titles
-    - Platforms
-    - Genres
-    - Critic scores from Metacritic
-    - User scores from Metacritic
-    - ESRB ratings
-    
-    The data was obtained from [Kaggle - Video Game Sales with Ratings](https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings).
-    """)
-    
-    
 if __name__ == '__main__':
     main()
