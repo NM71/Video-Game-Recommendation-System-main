@@ -27,25 +27,171 @@ st.set_page_config(
     layout="wide"
 )
 
-# Add custom CSS
+# Add custom CSS for both dark and light mode
 st.markdown("""
 <style>
+    /* Common styles */
     .main-header {
         font-size: 2.5rem;
-        color: #4CAF50;
         text-align: center;
         margin-bottom: 20px;
     }
     .subheader {
         font-size: 1.5rem;
-        color: #2196F3;
         margin-top: 20px;
         margin-bottom: 10px;
     }
-    .stMetric {
-        background-color: #f0f8ff;
-        padding: 10px;
-        border-radius: 5px;
+    
+    /* Dark mode styles */
+    @media (prefers-color-scheme: dark) {
+        .main-header {
+            color: #4CAF50;
+        }
+        .subheader {
+            color: #2196F3;
+        }
+        .stMetric {
+            background-color: rgba(30, 30, 30, 0.3);
+            border: 1px solid rgba(150, 150, 150, 0.2);
+        }
+    }
+    
+    /* Light mode styles */
+    @media (prefers-color-scheme: light) {
+        .main-header {
+            color: #2E7D32;
+        }
+        .subheader {
+            color: #1565C0;
+        }
+        .stMetric {
+            background-color: #f0f8ff;
+            border: 1px solid #e0e0e0;
+        }
+    }
+    
+    /* Card styles for both modes */
+    .game-card {
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        position: relative;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+    .game-card:hover {
+        transform: translateY(-3px);
+    }
+    .game-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-right: 60px;
+    }
+    .game-platform, .game-genre {
+        margin-bottom: 5px;
+    }
+    .game-rating {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-weight: bold;
+        color: white;
+    }
+    .rating-E {
+        background-color: #4CAF50;
+    }
+    .rating-T {
+        background-color: #2196F3;
+    }
+    .rating-M {
+        background-color: #F44336;
+    }
+    .rating-E10 {
+        background-color: #8BC34A;
+    }
+    .rating-other {
+        background-color: #9E9E9E;
+    }
+    .game-scores {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 10px;
+        margin-top: 5px;
+    }
+    .score-box {
+        text-align: center;
+    }
+    .score-label {
+        font-size: 12px;
+    }
+    .score-value {
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .steam-link {
+        text-decoration: none;
+        color: inherit;
+    }
+    .steam-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    /* Dark mode card styles */
+    @media (prefers-color-scheme: dark) {
+        .game-card {
+            background-color: rgba(50, 50, 50, 0.2);
+            border: 1px solid rgba(150, 150, 150, 0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .game-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .game-title {
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .game-platform, .game-genre {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        .game-scores {
+            border-top: 1px solid rgba(150, 150, 150, 0.2);
+        }
+        .score-label {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .score-value {
+            color: rgba(255, 255, 255, 0.9);
+        }
+    }
+    
+    /* Light mode card styles */
+    @media (prefers-color-scheme: light) {
+        .game-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .game-card:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .game-title {
+            color: #333;
+        }
+        .game-platform, .game-genre {
+            color: #555;
+        }
+        .game-scores {
+            border-top: 1px solid #eee;
+        }
+        .score-label {
+            color: #777;
+        }
+        .score-value {
+            color: #333;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -100,6 +246,13 @@ def export_recommendations(recommendations, game_name):
             mime="text/csv"
         )
 
+# Format value with fallback
+def format_value(value, default="N/A"):
+    """Format a value with a fallback for NaN values"""
+    if pd.isna(value) or value == "nan":
+        return default
+    return value
+
 # Load and process data
 @st.cache_data
 def load_and_process_data():
@@ -119,7 +272,11 @@ def load_and_process_data():
         video_games_filtered_df = video_games_df[['Name', 'Platform', 'Genre', 'Critic_Score', 'User_Score', 'Rating']]
         
         # Remove missing values
-        video_games_filtered_df.dropna(subset=['Name', 'Genre', 'Rating'], axis=0, inplace=True)
+        video_games_filtered_df.dropna(subset=['Name', 'Genre'], axis=0, inplace=True)
+        
+        # Fill missing ratings with 'Not Rated'
+        video_games_filtered_df['Rating'] = video_games_filtered_df['Rating'].fillna('Not Rated')
+        
         video_games_filtered_df = video_games_filtered_df.reset_index(drop=True)
         
         # Replace 'tbd' value to NaN
@@ -147,6 +304,10 @@ def load_and_process_data():
         video_games_final_df = video_games_filtered_df.drop(columns=['User_Score', 'Critic_Score', 'Ave_Critic_Score', 'Ave_User_Score'], axis=1)
         video_games_final_df = video_games_final_df.reset_index(drop=True)
         video_games_final_df = video_games_final_df.rename(columns={'Critic_Score_Imputed':'Critic_Score', 'User_Score_Imputed':'User_Score'})
+        
+        # Fill any remaining NaN values
+        video_games_final_df['Critic_Score'] = video_games_final_df['Critic_Score'].fillna(0)
+        video_games_final_df['User_Score'] = video_games_final_df['User_Score'].fillna(0)
         
         return video_games_final_df
     except Exception as e:
@@ -275,8 +436,6 @@ def VideoGameRecommender(video_game_name, video_game_platform, model_data, min_c
             # Get the distance of the games similar to the input
             recommended_distances = np.array(vg_distances[video_game_idx[0]][1:])
 
-        st.markdown(f"<h2 class='subheader'>Top 10 Recommended Video Games for '{video_game_name}' [platform:{video_game_platform}]</h2>", unsafe_allow_html=True)
-
         # Reset index and start from 1 instead of 0
         video_game_list = video_game_list.reset_index(drop=True)
         video_game_list.index = video_game_list.index + 1  # Start index from 1
@@ -356,214 +515,116 @@ def main():
         selected_genres = st.multiselect("Filter by Genre", 
                                         sorted(video_games_final_df['Genre'].unique()))
     
-    # Get recommendations
-    if st.sidebar.button("Get Recommendations") or st.session_state.last_search == game_name:
-        st.session_state.last_search = game_name
-        with st.spinner("Finding similar games..."):
-            recommendations = VideoGameRecommender(
-                game_name,
-                platform,
-                model_data,
-                min_critic_score,
-                min_user_score,
-                selected_genres
-            )
-            st.session_state.recommendations = recommendations
-        
-        if recommendations is not None:
-            # Display recommendations in a better layout
-            col1, col2 = st.columns([3, 1])
-            
-            with col1:
-                # Create a card-based UI instead of dataframe
-                st.markdown("""
-                <style>
-                .game-card {
-                    border: 1px solid rgba(150, 150, 150, 0.2);
-                    border-radius: 8px;
-                    padding: 15px;
-                    margin-bottom: 15px;
-                    position: relative;
-                    background-color: rgba(50, 50, 50, 0.2);
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-                    transition: transform 0.2s, box-shadow 0.2s;
-                    cursor: pointer;
-                }
-                .game-card:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-                }
-                .game-title {
-                    font-size: 18px;
-                    font-weight: bold;
-                    margin-bottom: 10px;
-                    padding-right: 60px;
-                    color: rgba(255, 255, 255, 0.9);
-                }
-                .game-platform {
-                    color: rgba(255, 255, 255, 0.7);
-                    margin-bottom: 5px;
-                }
-                .game-genre {
-                    color: rgba(255, 255, 255, 0.7);
-                    margin-bottom: 10px;
-                }
-                .game-rating {
-                    position: absolute;
-                    top: 15px;
-                    right: 15px;
-                    padding: 5px 10px;
-                    border-radius: 4px;
-                    font-weight: bold;
-                    color: white;
-                }
-                .rating-E {
-                    background-color: #4CAF50;
-                }
-                .rating-T {
-                    background-color: #2196F3;
-                }
-                .rating-M {
-                    background-color: #F44336;
-                }
-                .rating-E10 {
-                    background-color: #8BC34A;
-                }
-                .rating-other {
-                    background-color: #9E9E9E;
-                }
-                .game-scores {
-                    display: flex;
-                    justify-content: space-between;
-                    border-top: 1px solid rgba(150, 150, 150, 0.2);
-                    padding-top: 10px;
-                    margin-top: 5px;
-                }
-                .score-box {
-                    text-align: center;
-                }
-                .score-label {
-                    font-size: 12px;
-                    color: rgba(255, 255, 255, 0.6);
-                }
-                .score-value {
-                    font-size: 16px;
-                    font-weight: bold;
-                    color: rgba(255, 255, 255, 0.9);
-                }
-                .steam-link {
-                    text-decoration: none;
-                    color: inherit;
-                }
-                .steam-link:hover {
-                    text-decoration: none;
-                    color: inherit;
-                }
-                /* Light mode overrides */
-                @media (prefers-color-scheme: light) {
-                    .game-card {
-                        background-color: #f9f9f9;
-                        border: 1px solid #ddd;
-                    }
-                    .game-title {
-                        color: #333;
-                    }
-                    .game-platform, .game-genre {
-                        color: #555;
-                    }
-                    .game-scores {
-                        border-top: 1px solid #eee;
-                    }
-                    .score-label {
-                        color: #777;
-                    }
-                    .score-value {
-                        color: #333;
-                    }
-                }
-                </style>
-                """, unsafe_allow_html=True)
-                
-                # Generate cards for each game
-                for idx, row in recommendations.iterrows():
-                    # Ensure all values are properly formatted
-                    game_name = str(row['Name'])
-                    platform = str(row['Platform'])
-                    genre = str(row['Genre'])
-                    rating = str(row['Rating'])
-                    user_score = float(row['User_Score'])
-                    critic_score = float(row['Critic_Score'])
-                    similarity = float(row['Similarity_Distance'])
-                    
-                    # Determine rating class for color
-                    if rating == 'E':
-                        rating_class = 'rating-E'
-                    elif rating == 'T':
-                        rating_class = 'rating-T'
-                    elif rating == 'M':
-                        rating_class = 'rating-M'
-                    elif rating == 'E10+':
-                        rating_class = 'rating-E10'
-                    else:
-                        rating_class = 'rating-other'
-                    
-                    # Generate Steam search URL
-                    steam_url = get_steam_search_url(game_name)
-                    
-                    # Create card HTML with link
-                    card_html = f"""
-                    <a href="{steam_url}" target="_blank" class="steam-link">
-                        <div class="game-card">
-                            <div class="game-title">{idx}. {game_name}</div>
-                            <div class="game-rating {rating_class}">{rating}</div>
-                            <div class="game-platform">Platform: {platform}</div>
-                            <div class="game-genre">Genre: {genre}</div>
-                            <div class="game-scores">
-                                <div class="score-box">
-                                    <div class="score-label">User Score</div>
-                                    <div class="score-value">{user_score:.1f}</div>
-                                </div>
-                                <div class="score-box">
-                                    <div class="score-label">Critic Score</div>
-                                    <div class="score-value">{critic_score:.1f}</div>
-                                </div>
-                                <div class="score-box">
-                                    <div class="score-label">Similarity</div>
-                                    <div class="score-value">{similarity:.4f}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </a>
-                    """
-                    st.markdown(card_html, unsafe_allow_html=True)
-            
-            with col2:
-                # Add recommendation statistics
-                st.metric("Average Critic Score", f"{recommendations['Critic_Score'].mean():.1f}")
-                st.metric("Average User Score", f"{recommendations['User_Score'].mean():.1f}")
-                st.metric("Most Common Genre", recommendations['Genre'].mode()[0])
-                
-                # Add export functionality
-                export_recommendations(recommendations, game_name)
-    
-    # About section
-    st.sidebar.markdown("---")
-    st.sidebar.header("About")
-    st.sidebar.info("""
-    This recommendation system uses machine learning to find similar games based on:
-    - Genre
-    - Platform
-    - Rating
-    - Critic and User Scores
-    
-    Data source: [Kaggle - Video Game Sales with Ratings](https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings)
-    """)
-    
-    # Move instructions to tabs
+    # Create tabs at the top of the page
     tab1, tab2, tab3 = st.tabs(["Recommendations", "About", "Data Visualizations"])
     
+    
     with tab1:
-        if st.session_state.recommendations is None:
+        # Get recommendations
+        if st.sidebar.button("Get Recommendations") or st.session_state.last_search == game_name:
+            st.session_state.last_search = game_name
+            with st.spinner("Finding similar games..."):
+                recommendations = VideoGameRecommender(
+                    game_name,
+                    platform,
+                    model_data,
+                    min_critic_score,
+                    min_user_score,
+                    selected_genres
+                )
+                st.session_state.recommendations = recommendations
+            
+            if recommendations is not None:
+                # Display recommendations in a better layout
+                col1, col2 = st.columns([3, 1])
+                
+                with col1:
+                    st.markdown(f"<h2 class='subheader'>Top Recommended Video Games for '{game_name}' [platform:{platform}]</h2>", unsafe_allow_html=True)
+                    
+                    # Generate cards for each game
+                    for idx, row in recommendations.iterrows():
+                        # Ensure all values are properly formatted and handle NaN values
+                        game_name_str = format_value(row['Name'])
+                        platform_str = format_value(row['Platform'])
+                        genre_str = format_value(row['Genre'])
+                        rating_str = format_value(row['Rating'])
+                        
+                        # Handle numeric values
+                        try:
+                            user_score = float(row['User_Score'])
+                            user_score_display = f"{user_score:.1f}"
+                        except (ValueError, TypeError):
+                            user_score_display = "N/A"
+                            
+                        try:
+                            critic_score = float(row['Critic_Score'])
+                            critic_score_display = f"{critic_score:.1f}"
+                        except (ValueError, TypeError):
+                            critic_score_display = "N/A"
+                            
+                        try:
+                            similarity = float(row['Similarity_Distance'])
+                            similarity_display = f"{similarity:.4f}"
+                        except (ValueError, TypeError):
+                            similarity_display = "N/A"
+                        
+                        # Determine rating class for color
+                        if rating_str == 'E':
+                            rating_class = 'rating-E'
+                        elif rating_str == 'T':
+                            rating_class = 'rating-T'
+                        elif rating_str == 'M':
+                            rating_class = 'rating-M'
+                        elif rating_str == 'E10+':
+                            rating_class = 'rating-E10'
+                        else:
+                            rating_class = 'rating-other'
+                        
+                        # Generate Steam search URL
+                        steam_url = get_steam_search_url(game_name_str)
+                        
+                        # Create card HTML with link
+                        card_html = f"""
+                        <a href="{steam_url}" target="_blank" class="steam-link">
+                            <div class="game-card">
+                                <div class="game-title">{idx}. {game_name_str}</div>
+                                <div class="game-rating {rating_class}">{rating_str}</div>
+                                <div class="game-platform">Platform: {platform_str}</div>
+                                <div class="game-genre">Genre: {genre_str}</div>
+                                <div class="game-scores">
+                                    <div class="score-box">
+                                        <div class="score-label">User Score</div>
+                                        <div class="score-value">{user_score_display}</div>
+                                    </div>
+                                    <div class="score-box">
+                                        <div class="score-label">Critic Score</div>
+                                        <div class="score-value">{critic_score_display}</div>
+                                    </div>
+                                    <div class="score-box">
+                                        <div class="score-label">Similarity</div>
+                                        <div class="score-value">{similarity_display}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        """
+                        st.markdown(card_html, unsafe_allow_html=True)
+                
+                with col2:
+                    # Add recommendation statistics
+                    st.metric("Average Critic Score", f"{recommendations['Critic_Score'].mean():.1f}")
+                    st.metric("Average User Score", f"{recommendations['User_Score'].mean():.1f}")
+                    
+                    # Get most common genre safely
+                    if not recommendations['Genre'].empty:
+                        most_common_genre = recommendations['Genre'].mode()[0]
+                        st.metric("Most Common Genre", most_common_genre)
+                    
+                    # Add export functionality
+                    export_recommendations(recommendations, game_name)
+            else:
+                st.info("No recommendations found. Try adjusting your filters or selecting a different game.")
+        else:
             st.info("""
             ## How to Use
             1. Select a game from the dropdown or enter a game title
@@ -642,7 +703,7 @@ def main():
                 
             elif viz_type == "Critic Score Distribution":
                 fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(video_games_final_df['Critic_Score'], bins=20, kde=True, ax=ax)
+                sns.histplot(video_games_final_df['Critic_Score'].dropna(), bins=20, kde=True, ax=ax)
                 plt.xlabel('Critic Score')
                 plt.ylabel('Frequency')
                 plt.title("Distribution of Critic Scores")
@@ -650,7 +711,7 @@ def main():
                 
             elif viz_type == "User Score Distribution":
                 fig, ax = plt.subplots(figsize=(10, 6))
-                sns.histplot(video_games_final_df['User_Score'], bins=20, kde=True, ax=ax)
+                sns.histplot(video_games_final_df['User_Score'].dropna(), bins=20, kde=True, ax=ax)
                 plt.xlabel('User Score')
                 plt.ylabel('Frequency')
                 plt.title("Distribution of User Scores")
@@ -658,7 +719,9 @@ def main():
                 
             elif viz_type == "Critic vs User Scores":
                 fig, ax = plt.subplots(figsize=(10, 8))
-                sns.regplot(x=video_games_final_df['User_Score'], y=video_games_final_df['Critic_Score'], 
+                # Drop NaN values for the plot
+                plot_data = video_games_final_df.dropna(subset=['User_Score', 'Critic_Score'])
+                sns.regplot(x=plot_data['User_Score'], y=plot_data['Critic_Score'], 
                         line_kws={"color": "red"}, scatter_kws={'alpha': 0.3}, ax=ax)
                 ax.set(xlabel="User Score", ylabel="Critic Score", title="User Scores vs. Critic Scores")
                 st.pyplot(fig)
@@ -677,7 +740,7 @@ def main():
                 st.pyplot(fig)
         
         # Add a section for recommendation analysis if recommendations exist
-        if st.session_state.recommendations is not None:
+        if st.session_state.recommendations is not None and not st.session_state.recommendations.empty:
             st.markdown("### Analysis of Current Recommendations")
             
             recommendations = st.session_state.recommendations
@@ -692,7 +755,8 @@ def main():
             ax1.set_xticklabels(ax1.get_xticklabels(), rotation=45, ha='right')
             
             # Score comparison
-            recommendations[['Critic_Score', 'User_Score']].plot(kind='scatter', x='User_Score', y='Critic_Score', ax=ax2)
+            recommendations.dropna(subset=['User_Score', 'Critic_Score'])[['Critic_Score', 'User_Score']].plot(
+                kind='scatter', x='User_Score', y='Critic_Score', ax=ax2)
             ax2.set_title("Scores of Recommended Games")
             ax2.set_xlabel("User Score")
             ax2.set_ylabel("Critic Score")
