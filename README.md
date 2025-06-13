@@ -2,7 +2,7 @@
 
 The aim of the project is to provide video game suggestions based on user input: game title and platform (optional). This effort will benefit individuals who want to explore and find new games.
 
-The recommendation model is built using "NearestNeighbors", an unsupervised machine learning algorithm that uses distance computation to measure similarity or dissimilarity between the data points.
+The recommendation model is built using "NearestNeighbors", a supervised machine learning algorithm that uses distance computation to measure similarity or dissimilarity between the data points.
 
 1. Calculate the distance between the input and each data point in a dataset
 2. Select the data points with the smallest distance as the nearest neighbors
@@ -16,6 +16,26 @@ The following are the features that were used to develop the model:
 - User Score: Aggregated score by Metacritic's subscribers
 
 The dataset was obtained from the website https://www.kaggle.com/datasets/rush4ratio/video-game-sales-with-ratings.
+
+## Tools and Programming Languages Used
+
+### Programming Languages:
+- **Python 3.11** - Main programming language
+
+### Libraries and Frameworks:
+- **NumPy** - Numerical computations
+- **Pandas** - Data manipulation and analysis
+- **Matplotlib & Seaborn** - Data visualization
+- **Scikit-learn** - Machine learning (K-Nearest Neighbors algorithm)
+- **Streamlit** - Web application framework
+
+### Development Tools:
+- **Jupyter Notebook** - Interactive development and analysis
+- **Kaggle Dataset** - Data source for video game information
+
+### Machine Learning Algorithm:
+- **K-Nearest Neighbors (KNN)** - Unsupervised learning for similarity matching
+- **Cosine Similarity** - Distance computation method
 
 ## Project Structure
 
